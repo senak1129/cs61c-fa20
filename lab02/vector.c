@@ -33,10 +33,17 @@ vector_t *bad_vector_new() {
 
     retval->data[0] = 0;
     return retval;
+
+    /*
+     *retvalv 是一个局部变量，它在 bad_vector_new() 函数栈上分配。
+     *retval = &v; 是把 v 的地址赋给 retval。最后你 return retval;，也就是返回了 一个指向函数局部变量的指针。
+     *然而，一旦这个函数执行完毕，v 所在的内存会被释放（或覆盖），此时 retval 指向的内容就不再有效。
+   */
 }
 
 /* Another suboptimal way of creating a vector */
-vector_t also_bad_vector_new() {
+vector_t also_bad_vector_new()
+{
     /* Create the vector */
     vector_t v;
 
@@ -48,73 +55,86 @@ vector_t also_bad_vector_new() {
     }
     v.data[0] = 0;
     return v;
+    /*
+     *效率低下
+     */
 }
 
-/* Create a new vector with a size (length) of 1
-   and set its single component to zero... the
-   RIGHT WAY */
+/* 创建一个大小（长度）为 1 的新向量
+并将其单个分量设置为零……
+正确的方法 */
 vector_t *vector_new() {
-    /* Declare what this function will return */
+    /* 声明此函数将返回什么 */
     vector_t *retval;
 
-    /* First, we need to allocate memory on the heap for the struct */
-    retval = /* YOUR CODE HERE */
+    /* 首先，我们需要在堆上为结构体分配内存 */
+    retval = malloc(sizeof(*retval));
 
-    /* Check our return value to make sure we got memory */
-    if (/* YOUR CODE HERE */) {
+    /* 检查我们的返回值以确保我们获得了内存 */
+    if (retval == NULL) {
         allocation_failed();
     }
 
-    /* Now we need to initialize our data.
-       Since retval->data should be able to dynamically grow,
-       what do you need to do? */
-    retval->size = /* YOUR CODE HERE */;
-    retval->data = /* YOUR CODE HERE */;
+    /* 现在我们需要初始化数据。
+    由于 retval->data 应该能够动态增长，
+    你需要做什么？ */
+    retval->size =  1;
+    retval->data = malloc(sizeof(int) * retval -> size);
 
-    /* Check the data attribute of our vector to make sure we got memory */
-    if (/* YOUR CODE HERE */) {
-        free(retval);				//Why is this line necessary?
+    /* 检查向量的数据属性，以确保我们有内存 */
+    if (retval->data == NULL) {
+        free(retval);				//为什么这行是必要的?  会导致内存泄露
         allocation_failed();
     }
 
-    /* Complete the initialization by setting the single component to zero */
-    /* YOUR CODE HERE */ = 0;
+    /* 通过将单个组件设置为零来完成初始化 */
+    retval->data[0] = 0;
 
-    /* and return... */
+    /* 返回值 */
     return retval;
 }
 
-/* Return the value at the specified location/component "loc" of the vector */
+/* 返回向量指定位置/分量“loc”处的值 */
 int vector_get(vector_t *v, size_t loc) {
 
-    /* If we are passed a NULL pointer for our vector, complain about it and exit. */
+    /* 如果我们传递了一个向量的空指针，则发出警告并退出。 */
     if(v == NULL) {
         fprintf(stderr, "vector_get: passed a NULL vector.\n");
         abort();
     }
 
-    /* If the requested location is higher than we have allocated, return 0.
-     * Otherwise, return what is in the passed location.
+    /* 如果请求的位置高于我们分配的位置，则返回 0。
+     * 否则，返回传递的位置中的内容。
      */
-    if (loc < /* YOUR CODE HERE */) {
-        return /* YOUR CODE HERE */;
+    if (loc < v->size) {
+        return v->data[loc];
     } else {
         return 0;
     }
 }
 
-/* Free up the memory allocated for the passed vector.
-   Remember, you need to free up ALL the memory that was allocated. */
+/* 释放为传递的向量分配的内存。
+请记住，您需要释放所有已分配的内存。 */
 void vector_delete(vector_t *v) {
-    /* YOUR SOLUTION HERE */
+    free(v->data);
+    free(v);
 }
 
-/* Set a value in the vector. If the extra memory allocation fails, call
-   allocation_failed(). */
+/* 在向量中设置一个值。如果额外内存分配失败，则调用allocation_failed()。 */
 void vector_set(vector_t *v, size_t loc, int value) {
-    /* What do you need to do if the location is greater than the size we have
-     * allocated?  Remember that unset locations should contain a value of 0.
+    /* 如果位置大于我们分配的大小，该怎么办？请记住，未设置的位置应该包含 0 值。
      */
 
-    /* YOUR SOLUTION HERE */
+    if (loc >= v->size) {
+        v->data = (int*)realloc(v->data, sizeof(int)*(loc+1));
+        if (v->data == NULL) {
+            allocation_failed();
+        }
+        for (size_t i = v->size; i < loc + 1; i++){
+            v->data[i] = 0;
+        }
+        v->size = loc + 1;
+    }
+    v->data[loc] = value;
+
 }
